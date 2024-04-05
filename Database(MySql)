@@ -1,1 +1,40 @@
+create database rrs;
+use rrs;
+drop table traindetails;
+create table traindetails(
+id int NOT NULL AUTO_INCREMENT primary key,
+trainnumber varchar(10),
+trainname varchar(30),
+startingpoint varchar(30),
+destination varchar(30),
+starttime varchar(10)
+);
+drop table ticketdetails;
+insert into traindetails(trainnumber,trainname,startingpoint,destination,starttime) values('AH12723','andhra pradesh express','hyderabad','new delhi','12:00');
+insert into traindetails(trainnumber,trainname,startingpoint,destination,starttime) values('CA22639','allepey express','chennai central','allepey','10:00');
+insert into traindetails(trainnumber,trainname,startingpoint,destination,starttime) values('CJ16031','andaman express','chennai','jammu tawi','16:00');
+insert into traindetails(trainnumber,trainname,startingpoint,destination,starttime) values('US12316','ananya express','udaipur city','sealdah','22:00');
+select *from traindetails;
+describe userdetails;
+drop table userdetails;
+create table userdetails(
+	id int auto_increment primary key,
+    name varchar(30),
+    email varchar(30),
+    password varchar(30),
+    city varchar(30)
+);
+select * from userdetails;
+
+create table ticketdetails (
+	id int Not Null auto_increment primary key,
+    userid int Not Null,
+    trainid int Not Null,
+    tickets int not Null,
+    foreign key (userid) references userdetails(id),
+    foreign key (trainid) references traindetails(id)
+);
+select * from ticketdetails;
+
+Alter table userdetails change id id int auto_increment primary key;
 
