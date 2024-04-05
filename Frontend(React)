@@ -1,1 +1,444 @@
+#Function
+import React from 'react';
+import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import Homepage from './Pages/Homepage/homepage';
+import Booking from './Pages/Booking/booking';
+import Login from './Pages/Login/login';
+import Signup from './Pages/Signup/signup';
+import TicketView from './Pages/TicketView/ticketview';
+import './App.css';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" exact element={<Homepage></Homepage>} />
+        <Route path="/login" element={<Login></Login>} />
+        <Route path="/signup" element={<Signup></Signup>} />
+        <Route path="/booking" element={<Booking></Booking>} />
+        <Route path="/ticket" element={<TicketView></TicketView>} />        
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+
+#booking page
+import React from 'react';
+import axios from 'axios';
+
+class Booking extends React.Component{
+    constructor(props){
+        super(props);
+        this.state={
+            Trains:[],
+            email:"",
+            passenger1:'',
+            passenger2:'',
+            passenger3:'',
+            passenger4:'',
+            age1:0,
+            age2:0,
+            age3:0,
+            age4:0,
+            trainid:0,
+            tickets:0
+        }
+    }
+    componentDidMount(){
+        let {Trains}=this.state;
+        axios.get(`http://localhost:5001/trains`).then(res=>{
+        var name=res.data.data
+        if(res.data.success===true){
+            console.log(res.data.data)
+        name.forEach(element => {Trains.push(element);});  
+        this.setState({Trains})
+        }
+        }) 
+    }
+    book = (e) => {
+        let passengers =[];
+        if (this.state.passenger1 === ''){
+            alert('Enter atleast 1 passenger')
+        }
+        else{
+            passengers.push({name:this.state.passenger1, age: this.state.age1})
+            if (this.state.passenger2 !== ''){
+                passengers.push({name:this.state.passenger2, age: this.state.age2})
+            }
+            if (this.state.passenger3 !== ''){
+                passengers.push({name:this.state.passenger3, age: this.state.age3})
+            }
+            if (this.state.passenger4 !== ''){
+                passengers.push({name:this.state.passenger4, age: this.state.age4})
+            }
+        }
+        axios.post('http://localhost:5001/reserve', { email: this.state.email, trainid: this.state.trainid, tickets:this.state.tickets, passengers:passengers})
+            .then((res) => {
+                if (res.data.success === true) {
+                    const dats = res.data.data;
+                    console.log(dats);
+                    alert("tickets booked successfully!!! your PNR Number:"+ dats)
+                }
+            });
+    }
+
+    handleChangedropdown = (event) =>{
+        this.setState({trainid: event.target.value})
+    }
+    handleChange = (e) => {
+        this.setState({ [e.target.name]: e.target.value });
+    };
+
+    render() 
+    {
+        return (
+            <div>
+                <h4 className="headdis">Ticket Booking Page</h4>
+            <div id="login">
+            <div className='col-25'><label> Train:</label></div>
+                <div className='col-75'><select id="Teacher" onChange={e=>this.handleChangedropdown(e)}>
+                    {this.state.Trains.map((data,index)=>
+                        <option key ={index} value={data.id}>{data.trainnumber}:{data.trainname}</option>
+                    )}
+                </select> 
+            </div> 
+                <p>Enter passenger details(max 4)</p>
+                 <div className="col-75">
+                    <input type="number" className="form-alignment" name="tickets" placeholder='No. of tickets' onChange={(e) => this.handleChange(e)} /><br />
+                </div>
+                <div className="col-75">
+                    <input type="email" className="form-alignment" name="email" placeholder="Email" onChange={(e) => this.handleChange(e)} /><br />
+                </div>
+                <div className="col-75">
+                    <input type="name" className="form-alignment" name="passenger1" placeholder="Passenger 1" onChange={(e) => this.handleChange(e)} />
+                    <input type="number" className="form-alignment" name="age1" placeholder="Age" onChange={(e) => this.handleChange(e)} />
+                    <br /></div>
+                <div className="col-75">
+                    <input type="name" className="form-alignment" name="passenger2" placeholder="Passenger 2" onChange={(e) => this.handleChange(e)} />
+                    <input type="age" className="form-alignment" name="age2" placeholder="Age" onChange={(e) => this.handleChange(e)} />
+                    <br /></div>
+                <div className="col-75">
+                    <input type="name" className="form-alignment" name="passenger3" placeholder="Passenger 3" onChange={(e) => this.handleChange(e)} />
+                    <input type="age" className="form-alignment" name="age3" placeholder="Age" onChange={(e) => this.handleChange(e)} />
+                    <br />
+                </div>
+                <div className="col-75">
+                    <input type="name" className="form-alignment" name="passenger4" placeholder="Passenger 4" onChange={(e) => this.handleChange(e)} />
+                    <input type="age" className="form-alignment" name="age4" placeholder="Age" onChange={(e) => this.handleChange(e)} />
+                    <br />
+                </div>
+            </div>
+  
+            <div className='col-75'> <button className="buttonstyle" id="send" onClick={e => { this.book(e) }} >Book</button>
+        </div>
+    </div>)
+    }
+}
+export default Booking;
+
+#HomePage
+import React from 'react';
+import './homepage.css';
+
+class Homepage extends React.Component{
+    constructor(props){
+        super(props);
+        this.state={}
+    }
+
+    render(){
+        return(
+        <div>
+            <div className="signupmain">
+                <p className="page-tag">Welcome To IRCTC Ticket booking portal</p>
+                <div className="buttins">
+                    <p className="para">for Booking ticket either login/signup</p>
+                    <button className="buttonstyle">
+                        <a className="line" href="/login">Login</a>
+                    </button>
+                    <button className="buttonstyle">
+                        <a className="line" href="/signup"> Signup</a>
+                    </button>
+                </div>
+            </div>
+        </div>);
+    }
+}
+export default Homepage;
+
+#login
+import React from 'react';
+import axios from 'axios';
+import {Navigate} from 'react-router-dom';
+import './login.css';
+import Booking from '../Booking/booking';
+
+class Login extends React.Component{
+    
+    constructor(props) {
+        super(props);
+        this.state = {
+            email: "",
+            password: "",
+            userid:0,
+            submitted:false
+        };
+
+    }
+    check = (e) => {
+        axios.post('http://localhost:5001/login', { email: this.state.email, password: this.state.password })
+            .then((res) => {
+                if (res.data.success === true) {
+                    const dats = res.data;
+                    console.log(dats);
+                    sessionStorage.setItem("userData", JSON.stringify(res.data.data));
+                    this.setState({submitted: true, userid:res.data.data.id})
+                    alert('user logged in successfully change the url to /booking to book tickets')
+                }
+            });
+    }
+    handleChange = (e) => {
+        this.setState({ [e.target.name]: e.target.value });
+    };
+
+    render() {
+        return (
+            <div className="loginmain">
+                <h4 className="headdis">Login</h4>
+                <div>
+                    <div className="signpage">
+                        <div className="container">
+                            <div id="login">
+                                <div className="col-75">
+                                    <input type="email" className="form-alignment" name="email" placeholder="Email" onChange={(e) => this.handleChange(e)} /><br /></div>
+
+                                <div className="col-75">
+                                    <input type="password" className="form-alignment" name="password" placeholder="Password" onChange={(e) => this.handleChange(e)} /><br />
+                                </div>
+
+                                <button id="send" className="buttonstyle" onClick={e => this.check(e)}>Login</button>
+                                <p className="para">New user?</p>
+                                <button className="buttonstyle"><a className="line" href="/signup">Signup</a></button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        )
+    }
+    ;
+}
+export default Login;
+
+#Signup
+import React from 'react';
+import axios from 'axios';
+import './signup.css';
+import { Navigate } from 'react-router-dom';
+import Login from '../Login/login';
+
+class Signup extends React.Component{
+    constructor(props) {
+        super(props);
+        this.state = {
+            name: "",
+            email: "",
+            city: "",
+            password: "",
+            cpassword: "",
+            submitted: false
+        };
+    }
+    signup = (e) => {
+        e.preventDefault();
+        if (this.state.name === "") {
+            alert("Enter your Name");
+        } else if (this.state.email === "") {
+            alert("Enter your email");
+        } else if (this.state.city === "") {
+            alert("Enter your city");
+        }else if (this.state.password !== this.state.cpassword) {
+            alert("Passwords did not match");
+        } else {
+            axios.post("http://localhost:5001/signup", { name: this.state.name, email: this.state.email, city: this.state.city, password: this.state.password }).then(res => {
+                console.log(res);
+                if (res.data.success === true) {
+                    console.log('data entered successfully');
+                    this.setState({submitted: true});
+                    alert("User Registered successfully login to continue");
+                }
+            });
+        }
+
+    }
+    handleChange = (e) => {
+        this.setState({ [e.target.name]: e.target.value });
+    };
+
+    render() {
+        return (
+            <div className="signupmain">
+                <div className="signupset" align="center">
+                    <input
+                        className="form-alignments"
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="Name"
+                        onChange={e => this.handleChange(e)}
+                    />
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Email"
+                        className="form-alignments"
+                        onChange={e => this.handleChange(e)}
+                    />
+                    <input
+                        className="form-alignments"
+                        type="text"
+                        id="city"
+                        name="city"
+                        placeholder="City"
+                        onChange={e => this.handleChange(e)}
+                    />
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Password"
+                        className="form-alignments"
+                        onChange={e => this.handleChange(e)}
+                    />
+                    <input
+                        type="password"
+                        id="confirm"
+                        name="cpassword"
+                        placeholder="Confirm Password"
+                        className="form-alignments"
+                        onChange={e => this.handleChange(e)}
+                    />
+                    <button
+                        className="buttonstyle"
+                        id="send"
+                        onClick={e => {
+                            this.signup(e);
+                        }}>
+                        Signup
+            </button>
+                    <div className="buttins">
+                        <p className="para">Have an account?</p>
+                        <button className="buttonstyle">
+                            <a className="line" href="/login">
+                                Login</a>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            )
+           
+    }
+}
+export default Signup;
+
+#TicketView
+import React, {useState} from 'react';
+import axios from 'axios';
+// class TicketView extends React.Component{
+//     constructor(props){
+//         super(props);
+//         this.state={
+//             passengers:[],
+//             pnr:0,
+//             show:false
+//         };
+//     }
+//     getPassengerDetails=()=>{
+//         axios.get('http://localhost:5001/ticket',params:{pnr:pnr})
+//             .then((res) => {
+//                 if (res.data.success === true) {
+//                     const dats = res.data.data;
+//                     console.log(dats);
+//                     dats.forEach(element => {passengerarray.push(element);});
+//                     dats.forEach(element => {setPassengerDetails(passengerdetails => [...passengerdetails, element]);});
+//                     // setPassengerDetails(passengerdetails => [...passengerdetails, ...passengerarray]);
+//                     // setPassengerDetails(dats);
+//                     console.log(passengerarray, passengerdetails)
+//                     setShow(true);
+//                 }
+//             });
+//     render(){
+//         return(
+//             (<div>
+//                 {!show && <div className="loginmain">
+//                         <h4 className="headdis">Ticket Passengers List</h4>
+//                         <div className="col-75">
+//                          <input type="number" className="form-alignment" name="pnr" placeholder="Enter PNR" onChange={(e) => handleChange(e)} /><br /></div>
+//                             <div className='col-75'> <button className="buttonstyle" id="send" onClick={e => { getPassengerDetails() }} >Show Details</button></div>
+        
+//                 </div>}
+//                 {show && <div  className="loginmain">
+//                 <select id="Teacher" onChange={e=>handleChangedum(e)}>
+//                             {passengers.map((data,index)=>
+//                                 <option key ={index} value={data.age}>{data}</option>
+//                             )}
+//                         </select> 
+//                     </div>
+//                     }
+//             </div>
+//         )
+//     }
+
+// }
+const TicketView =()=>{
+    const [pnr, setPnr] = useState(0);
+    const [show, setShow] = useState(false);
+    let passengerarray=[];
+    const [passengerdetails, setPassengerDetails] = useState([]);
+
+    const handleChange = (e) => {
+        setPnr( e.target.value);
+    };
+    const handleChangedum = (e) =>{
+
+    }
+    const getPassengerDetails=()=>{
+        axios.post('http://localhost:5001/ticket', {pnr:pnr})
+            .then((res) => {
+                if (res.data.success === true) {
+                    const dats = res.data.data;
+                    console.log(dats);
+                    dats.forEach(element => {passengerarray.push(element);});
+                    dats.forEach(element => {setPassengerDetails(passengerdetails => [...passengerdetails, element]);});
+                    // setPassengerDetails(passengerdetails => [...passengerdetails, ...passengerarray]);
+                    // setPassengerDetails(dats);
+                    console.log(passengerarray, passengerdetails)
+                    setShow(true);
+                }
+            });
+    }
+    return(<div>
+        {!show && <div className="loginmain">
+                <h4 className="headdis">Ticket Passengers List</h4>
+                <div className="col-75">
+                    <input type="number" className="form-alignment" name="pnr" placeholder="Enter PNR" onChange={(e) => handleChange(e)} /><br /></div>
+                    <div className='col-75'> <button className="buttonstyle" id="send" onClick={e => { getPassengerDetails() }} >Show Details</button></div>
+
+        </div>}
+        {show && <div  className="loginmain">
+        <select id="Teacher" onChange={e=>handleChangedum(e)}>
+                    {passengerarray.map((data,index)=>
+                        <option key ={index} value={data.age}>{data}</option>
+                    )}
+                </select> 
+            </div>
+            }
+    </div>)
+}
+export default TicketView;
 
