@@ -1,1 +1,115 @@
+const express = require('express');
+const mysql = require('mysql');
+const bodyParser = require('body-parser');
+
+const app = express();
+var cors = require('cors');
+app.use(cors());
+const port = 5001;
+
+// MySQL Connection
+const db = mysql.createConnection({
+  host: 'localhost',
+  port:3306,
+  user: 'root',
+  password: 'root',
+  database: 'rrs',
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error('Database connection failed: ' + err.stack);
+    return;
+  }
+  console.log('Connected to database');
+});
+
+// Middleware
+app.use(bodyParser.json());
+
+// API Endpoints
+app.get('/trains', function(req, resp){
+  // Implement logic to fetch available trains from the database
+  // Return the data as JSON
+  db.query('select * from traindetails',(err, res)=>{
+    if (err) console.log(err);
+    else{
+      let result = Object.values(JSON.parse(JSON.stringify(res)));
+      resp.send({success: true, data: result})
+    }
+  })
+});
+app.post('/ticket', function(req, resp){
+  const { pnr } = req.body;
+  // Implement logic to fetch available trains from the database
+  // Return the data as JSON
+  db.query(`select passenger,age from passengerdetails where ticketid='${pnr}'`,(err, res)=>{
+    if (err) console.log(err);
+    else{
+      let result = Object.values(JSON.parse(JSON.stringify(res)));
+      resp.send({success: true, data: result})
+    }
+  })
+});
+
+app.post('/reserve', (req, resp) => {
+  const { trainid, email, tickets, passengers } = req.body;
+  // Implement logic to reserve a seat and update the database
+  // Return the reservation status as JSON
+  db.query(`select id from userdetails where email='${email}'`,(err1,res1)=>{
+    if (err1) console.log(err1);
+    else{
+      let result = Object.values(JSON.parse(JSON.stringify(res1)));
+      db.query(`insert into ticketdetails(userid,trainid,tickets) values('${result[0].id}','${trainid}','${tickets}')`,(err)=>{
+        if (err) console.log(err);
+        else{
+          db.query(`select id from ticketdetails where userid='${result[0].id}' and trainid='${trainid}'`, (err1,res)=>{
+            if (err1) console.log(err1);
+            else{
+              let result2 = Object.values(JSON.parse(JSON.stringify(res)));
+              console.log(passengers, result2[0].id)
+              passengers.map(passenger =>[console.log(result2[0].id, passenger.name,passenger.age,result[0].id)])
+              db.query(`insert into passengerdetails(ticketid,passenger,age,bookinguserid) values ?`,[passengers.map(passenger =>[result2[0].id, passenger.name,passenger.age,result[0].id])],(err2,res2)=>{
+                if (err2) console.log(err2);
+                else{
+                  console.log('success')
+                  resp.send({success: true, data:result2[0].id})
+                }
+              })
+
+            }
+            
+          })
+        }
+      })
+    }
+  })
+  
+});
+app.post('/signup', function(req, resp) {
+  const { name, email, city, password } = req.body;
+  // Implement logic to Signing a user into the train reservation application
+  db.query(`insert into userdetails(name,email,password,city) values('${name}','${email}','${password}','${city}')`,(err,res)=>{
+    if (err) console.log(err);
+    else{
+      resp.send({success: true})
+    }
+  })
+});
+app.post('/login', function(req, resp) {
+  const { email, password } = req.body;
+    // Implement logic to authenciate a user into the train reservation application
+  db.query(`select * from userdetails where email like '${email}' and password like '${password}'`,(err,res)=>{
+    if (err) console.log(err);
+    else{
+      let result = Object.values(JSON.parse(JSON.stringify(res)));
+      resp.send({success: true, data: res})
+    }
+  })
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
 
